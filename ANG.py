@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import datetime as dt
 
-test_flag = True
+test_flag = False
 print('----##### LOADING DATA ####----')
 if test_flag == False:
     df = pd.read_excel(
@@ -95,5 +95,5 @@ for i in Unit_Names:
 
 
 output = output.reset_index(drop=True)
-
+output = output.dropna(how='all')
 print(output.to_csv('out.csv', index=False))
