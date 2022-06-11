@@ -2,37 +2,40 @@ from numpy import dtype
 import pandas as pd
 import datetime as dt
 
-test_flag = True
-
+test_flag = False
+print('----##### LOADING DATA ####----')
 if test_flag == False:
-
     df = pd.read_excel(
-        'C:/Users/ahpar/Desktop/DoD SAFE-HopvceRgWUpfyQ9N/DoD SAFE-HopvceRgWUpfyQ9N/ang-it-asset-tracker/Raw Data.xls', sheet_name=None, header=None)
+        'C:/Users/ahpar/Desktop/DoD SAFE-HopvceRgWUpfyQ9N/ang-it-asset-tracker/Raw Data.xls', sheet_name=None, header=None)
     column_names = df['Sheet1'].loc[[0]]
 
 else:
-    ''
     df = {
         'Sheet1': pd.DataFrame({
-            '1': ['Last Inv Dt/Tm', '2022-04-29', '2022-05-29'],
-            '2': ['UIC', 'FA706', 'FA489']
+            '1': ['Last Inv Dt/Tm', '2020-04-29', '2020-05-29', '2022-05-29', '2022-05-29', '2021-06-29'],
+            '2': ['UIC', 'FA706', 'FA489', 'FA489', 'FA489', 'FA489'],
+            '3': ['Loc', 'TX', 'AK', 'DE', 'MI', ''],
+            '4': ['Serial Number', '1234', '45677', '45678', '098765', '']
         })}
-    print(df)
+    states_df = pd.DataFrame({
+
+    })
     column_names = df['Sheet1'].loc[[0]]
 
+print('----##### DATA LOADED ####----')
 data = pd.DataFrame()
 Unit_Total_Assets = {}
 Unit_Completed_Assets = {}
-
-
-print(column_names.values)
+Unit_Due_Inspections = {}
+Unit_Percent_Complete = {}
+Unit_Due_In_6 = {}
 
 for i in df.keys():
-    ''
     df[i].columns = column_names.values[0]
     data = pd.concat([data.reset_index(drop=True),
                      df[i].reset_index(drop=True)], axis=0)
 
+#   Clean Data  #
 data = data.dropna(how='all')
 data = data.iloc[1:, :]
 data = data.reset_index(drop=True)
@@ -41,17 +44,33 @@ data['Last Inv Dt/Tm'] = pd.to_datetime(data['Last Inv Dt/Tm'])
 
 #   Get Unit Names  #
 Unit_Names = data['UIC'].drop_duplicates(keep='first', inplace=False)
-print(Unit_Names)
-print(data.dtypes)
 
-# Get completion stats
+# Get completion stats  #
+Due_DF = data[dt.datetime.now() - dt.timedelta(days=365)
+              > data['Last Inv Dt/Tm']]
+Complete_DF = data[dt.datetime.now() - dt.timedelta(days=365)
+                   < data['Last Inv Dt/Tm']]
+Due_in_6 = data[(dt.datetime.now() - dt.timedelta(days=183)
+                > data['Last Inv Dt/Tm']) & (dt.datetime.now() - dt.timedelta(days=360)
+                < data['Last Inv Dt/Tm'])]
+
 for i in Unit_Names:
-    Unit_Total_Assets[i] = data.loc[data['UIC'] == i].count
-    Unit_Completed_Assets[i] = data.loc[data['UIC']
-                                        == i & dt.datetime.now() - dt.timedelta(days=365) > dt.datetime.strptime(data['Last Inv Dt/Tm'], '%y-%m-%d %H:%M')]
+    print('----##### GETTING DATA FOR {unit} ####----'.format(unit=i))
+    Unit_Total_Assets[i] = data[data['UIC']
+                                == i]
+    Unit_Completed_Assets[i] = Complete_DF[(
+        Complete_DF['UIC'] == i)]
+    Unit_Due_Inspections[i] = Due_DF[(Due_DF['UIC'] == i)]
+    Unit_Percent_Complete[i] = (
+        Unit_Completed_Assets[i].shape[0]/Unit_Total_Assets[i].shape[0])*100
+    Unit_Due_In_6[i] = Due_in_6[(Due_in_6['UIC'] == i)]
 
 
-print('Assets by unit  : \n', Unit_Total_Assets,
-      '\n\n', Unit_Completed_Assets, '\n\n')
-
-print(data.info)
+for i in Unit_Names:
+    print('{Unit}\nUnit Assets: \n{total}\nCompleted Inspections:\n{complete}\nUnit Inspections Due:\n{due}\nUnit Inspection Completion Percentage:\n{p}%\nUnit # Inspections Coming Due in Next 6 Months\n{sixm}\n'.format(
+        Unit=i, total=Unit_Total_Assets[i].shape[0],
+        complete=Unit_Completed_Assets[i].shape[0],
+        due=Unit_Due_Inspections[i].shape[0],
+        p=Unit_Percent_Complete[i],
+        sixm=Unit_Due_In_6[i].shape[0]
+    ))
