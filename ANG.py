@@ -1,8 +1,8 @@
-from numpy import dtype
+import numpy as np
 import pandas as pd
 import datetime as dt
 
-test_flag = False
+test_flag = True
 print('----##### LOADING DATA ####----')
 if test_flag == False:
     df = pd.read_excel(
@@ -15,7 +15,7 @@ else:
             '1': ['Last Inv Dt/Tm', '2020-04-29', '2020-05-29', '2022-05-29', '2022-05-29', '2021-06-29'],
             '2': ['UIC', 'FA706', 'FA489', 'FA489', 'FA489', 'FA489'],
             '3': ['Loc', 'TX', 'AK', 'DE', 'MI', ''],
-            '4': ['Serial Number', '1234', '45677', '45678', '098765', '']
+            '4': ['Serial Number', '1234', '45677', '45678', '098765', '965769']
         })}
     states_df = pd.DataFrame({
 
@@ -65,6 +65,16 @@ for i in Unit_Names:
         Unit_Completed_Assets[i].shape[0]/Unit_Total_Assets[i].shape[0])*100
     Unit_Due_In_6[i] = Due_in_6[(Due_in_6['UIC'] == i)]
 
+#   Print Output    #
+output = pd.DataFrame({
+    'Unit': [np.nan],
+    'Unit Assets': [np.nan],
+    'Completed Inspections': [np.nan],
+    'Inspections Due': [np.nan],
+    'Inspection Percentage': [np.nan],
+    'Due in 6': [np.nan]
+})
+
 
 for i in Unit_Names:
     print('{Unit}\nUnit Assets: \n{total}\nCompleted Inspections:\n{complete}\nUnit Inspections Due:\n{due}\nUnit Inspection Completion Percentage:\n{p}%\nUnit # Inspections Coming Due in Next 6 Months\n{sixm}\n'.format(
@@ -74,3 +84,16 @@ for i in Unit_Names:
         p=Unit_Percent_Complete[i],
         sixm=Unit_Due_In_6[i].shape[0]
     ))
+    output = pd.concat([output, pd.DataFrame({
+        'Unit': [i],
+        'Unit Assets': [Unit_Total_Assets[i].shape[0]],
+        'Completed Inspections': [Unit_Completed_Assets[i].shape[0]],
+        'Inspections Due': [Unit_Due_Inspections[i].shape[0]],
+        'Inspection Percentage': [int(Unit_Percent_Complete[i])],
+        'Due in 6': [Unit_Due_In_6[i].shape[0]]
+    })])
+
+
+output = output.reset_index(drop=True)
+
+print(output.to_csv('out.csv', index=False))
