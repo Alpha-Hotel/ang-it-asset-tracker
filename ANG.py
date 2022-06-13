@@ -1,4 +1,3 @@
-from matplotlib.pyplot import pie, scatter
 import numpy as np
 import pandas as pd
 import datetime as dt
@@ -155,9 +154,14 @@ def update_bar_chart(Unit, graph_type):
     return fig
 
 
-pie_values = pd.DataFrame({'values': [
+'''pie_values = pd.DataFrame({'values': [
     output['Greater than 6'].sum(), output['Due in 6'].sum(),
     output['Inspections Due'].sum()]})
+'''
+pie_values = pd.DataFrame({'values': [
+    6, 2, 3
+]})
+
 
 print(pie_values)
 
